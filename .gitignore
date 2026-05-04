@@ -1,0 +1,8 @@
+.env
+companies.json
+.DS_Store
+__pycache__/
+*.pyc
+cache/
+*.duckdb
+*.duckdb.wal

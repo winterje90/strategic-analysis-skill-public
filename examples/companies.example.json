@@ -1,0 +1,36 @@
+{
+  "ExampleCo": {
+    "crm": {
+      "type": "salesforce",
+      "sf_org": "exampleco@example.com",
+      "field_mapping": "auto"
+    },
+    "call_recorder": {
+      "type": "gong",
+      "base_url": "https://api.gong.io"
+    },
+    "portfolio_path": "/path/to/company/workspace",
+    "interview_paths": {
+      "churn_interviews": "source-docs/churn-interviews/",
+      "market_research": "source-docs/",
+      "knowledge_files": [],
+      "gong_exports": "source-docs/gong-*.md"
+    }
+  },
+  "ExampleHubSpotCo": {
+    "crm": {
+      "type": "hubspot",
+      "field_mapping": "auto"
+    },
+    "call_recorder": {
+      "type": "fathom"
+    },
+    "portfolio_path": "/path/to/company/workspace",
+    "interview_paths": {
+      "churn_interviews": "",
+      "market_research": "",
+      "knowledge_files": [],
+      "gong_exports": ""
+    }
+  }
+}
