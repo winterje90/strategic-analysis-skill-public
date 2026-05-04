@@ -115,7 +115,10 @@ Edit `~/.claude/skills/strategic-analysis/companies.json`:
     "field_mapping": "auto"
   },
   "call_recorder": {
-    "type": "gong"
+    "type": "gong",
+    "base_url": "https://api.gong.io",
+    "env_key": "GONG_ACCESS_KEY",
+    "env_secret": "GONG_ACCESS_KEY_SECRET"
   },
   "portfolio_path": "/path/to/company/folder",
   "interview_paths": {
@@ -159,8 +162,9 @@ Setting `field_mapping` to `"auto"` triggers field discovery on first run. The s
 
 **Gong:** Add to `~/.env`:
 ```
-GONG_API_KEY=your-key
-GONG_API_SECRET=your-secret
+GONG_ACCESS_KEY=your-key
+GONG_ACCESS_KEY_SECRET=your-secret
+GONG_BASE_URL=https://api.gong.io
 ```
 
 **Fathom:** Add to `~/.env`:

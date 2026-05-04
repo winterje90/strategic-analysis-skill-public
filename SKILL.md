@@ -123,7 +123,27 @@ If the company is not in companies.json, stop and say:
 
 ### 0d: Check Call Recorder
 
-**Gong:** Run `source ~/.env` and check `GONG_API_KEY` and `GONG_API_SECRET` exist. If missing and `--skip-calls` is not set, warn and auto-enable `--skip-calls`.
+**Environment loading (required before checking any recorder API):** Automatically source environment files in this order, if present:
+
+```bash
+[ -f ~/.env ] && source ~/.env
+[ -f ~/.claude/skills/strategic-analysis/.env ] && source ~/.claude/skills/strategic-analysis/.env
+[ -f "$(dirname "$SKILL_FILE")/.env" ] && source "$(dirname "$SKILL_FILE")/.env"
+```
+
+If the skill runner does not expose `SKILL_FILE`, use the directory containing this `SKILL.md`.
+
+**Gong:** Resolve credentials from `companies.json` first:
+- `config.call_recorder.env_key` gives the environment variable name for the Gong access key
+- `config.call_recorder.env_secret` gives the environment variable name for the Gong access key secret
+- `config.call_recorder.base_url` or `GONG_BASE_URL` gives the base URL
+
+Fallbacks for older configs:
+- `GONG_ACCESS_KEY` / `GONG_ACCESS_KEY_SECRET`
+- `GONG_API_KEY` / `GONG_API_SECRET`
+- legacy inline `config.call_recorder.access_key` / `config.call_recorder.access_key_secret` only if present, but warn: "Inline Gong credentials found in companies.json. Move them to `.env` and use `env_key` / `env_secret`."
+
+If no Gong credentials resolve and `--skip-calls` is not set, warn and auto-enable `--skip-calls`.
 
 **Fathom:** Run `source ~/.env` and check `FATHOM_API_KEY` exists. If missing and `--skip-calls` is not set, warn and auto-enable `--skip-calls`.
 
@@ -419,13 +439,21 @@ If <30 deals, warn: "Small sample size ({N} deals). Analysis will have limited s
 
 **Authentication:**
 ```bash
-source ~/.env
-AUTH=$(echo -n "${GONG_API_KEY}:${GONG_API_SECRET}" | base64)
+[ -f ~/.env ] && source ~/.env
+[ -f ~/.claude/skills/strategic-analysis/.env ] && source ~/.claude/skills/strategic-analysis/.env
+[ -f "$(dirname "$SKILL_FILE")/.env" ] && source "$(dirname "$SKILL_FILE")/.env"
+
+GONG_KEY_VAR="${config.call_recorder.env_key:-GONG_ACCESS_KEY}"
+GONG_SECRET_VAR="${config.call_recorder.env_secret:-GONG_ACCESS_KEY_SECRET}"
+GONG_KEY="${!GONG_KEY_VAR:-${GONG_API_KEY:-${config.call_recorder.access_key:-}}}"
+GONG_SECRET="${!GONG_SECRET_VAR:-${GONG_API_SECRET:-${config.call_recorder.access_key_secret:-}}}"
+GONG_BASE_URL="${config.call_recorder.base_url:-${GONG_BASE_URL:-https://api.gong.io}}"
+AUTH=$(echo -n "${GONG_KEY}:${GONG_SECRET}" | base64)
 ```
 
 **2a: Get calls in date range:**
 ```bash
-curl -s -X POST "${GONG_BASE_URL:-https://us-55616.api.gong.io}/v2/calls/extensive" \
+curl -s -X POST "${GONG_BASE_URL}/v2/calls/extensive" \
   -H "Authorization: Basic ${AUTH}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -482,7 +510,7 @@ Build mapping: `{ sfOpportunityId: [gongNativeCallId, ...] }`.
 **Source 2: Gong REST API (if managed package not detected, or returned empty):**
 
 ```bash
-curl -s "${GONG_BASE_URL:-https://us-55616.api.gong.io}/v2/calls/manual-crm-associations" \
+curl -s "${GONG_BASE_URL}/v2/calls/manual-crm-associations" \
   -H "Authorization: Basic ${AUTH}"
 ```
 
@@ -492,7 +520,7 @@ Build mapping from `crmObjectId` values.
 
 **2c: Get transcripts for linked calls (batches of up to 100):**
 ```bash
-curl -s -X POST "${GONG_BASE_URL:-https://us-55616.api.gong.io}/v2/calls/transcript" \
+curl -s -X POST "${GONG_BASE_URL}/v2/calls/transcript" \
   -H "Authorization: Basic ${AUTH}" \
   -H "Content-Type: application/json" \
   -d '{ "filter": { "callIds": ["{CALL_ID_1}", "{CALL_ID_2}"] } }'
@@ -500,7 +528,7 @@ curl -s -X POST "${GONG_BASE_URL:-https://us-55616.api.gong.io}/v2/calls/transcr
 
 **2d: Get AI summaries:**
 ```bash
-curl -s -X POST "${GONG_BASE_URL:-https://us-55616.api.gong.io}/v2/calls/ai-content" \
+curl -s -X POST "${GONG_BASE_URL}/v2/calls/ai-content" \
   -H "Authorization: Basic ${AUTH}" \
   -H "Content-Type: application/json" \
   -d '{ "filter": { "callIds": ["{CALL_ID_1}", "{CALL_ID_2}"] } }'
@@ -2673,7 +2701,7 @@ If the upload fails (expired token, missing credentials), keep the .md file and 
 
 ### Call Recorder Options
 
-- **Gong:** Set `GONG_API_KEY` and `GONG_API_SECRET` in `~/.env`
+- **Gong:** Set credentials in `.env` and reference their variable names from `companies.json` using `env_key` and `env_secret`. Example: `GONG_ACCESS_KEY` and `GONG_ACCESS_KEY_SECRET`.
 - **Fathom:** Set `FATHOM_API_KEY` in `~/.env`
 - **Manual:** Set `"call_recorder": {"type": "manual"}` -- you'll be prompted to paste transcripts
 

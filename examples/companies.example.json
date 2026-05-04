@@ -7,7 +7,9 @@
     },
     "call_recorder": {
       "type": "gong",
-      "base_url": "https://api.gong.io"
+      "base_url": "https://api.gong.io",
+      "env_key": "GONG_ACCESS_KEY",
+      "env_secret": "GONG_ACCESS_KEY_SECRET"
     },
     "portfolio_path": "/path/to/company/workspace",
     "interview_paths": {
